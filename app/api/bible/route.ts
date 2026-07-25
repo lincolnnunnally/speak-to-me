@@ -1,60 +1,110 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams;
-  const ref = searchParams.get("ref");
+export const runtime = "nodejs";
 
+/**
+ * Public-domain Scripture lookup.
+ * Primary: bible-api.com (World English Bible, public domain, actively hosted).
+ * Fallbacks: bible-api.com KJV, then dailybible.ca KJV.
+ * Every upstream call is time-boxed so a slow/broken source can't hang the
+ * serverless function. `ref` is percent-encoded into fixed hosts (no SSRF).
+ */
+
+const TIMEOUT_MS = 6000;
+
+async function fetchJson(url: string): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  try {
+    return await fetch(url, {
+      headers: { "User-Agent": "SpeakToMeApp/1.0 (+life-produces-life)" },
+      signal: controller.signal,
+      next: { revalidate: 86400 }, // cache a day
+    });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function normalizeBibleApi(data: {
+  reference?: string;
+  text?: string;
+  verses?: { text?: string }[];
+  translation_name?: string;
+  translation_id?: string;
+}, ref: string) {
+  const text =
+    (data.text && data.text.trim()) ||
+    (Array.isArray(data.verses)
+      ? data.verses.map((v) => v.text || "").join(" ").trim()
+      : "");
+  return {
+    reference: data.reference || ref,
+    text,
+    translation: data.translation_name || data.translation_id?.toUpperCase() || "WEB",
+    attribution: "Public Domain",
+  };
+}
+
+export async function GET(request: NextRequest) {
+  const ref = request.nextUrl.searchParams.get("ref");
   if (!ref) {
     return NextResponse.json({ error: "Missing reference" }, { status: 400 });
   }
+  const encoded = encodeURIComponent(ref.trim());
 
+  // 1) bible-api.com (WEB)
   try {
-    // Use bible49.com - free public domain (WEB / BSB)
-    const url = `https://bible49.com/api/bible?ref=${encodeURIComponent(ref)}&t=web`;
-    const res = await fetch(url, {
-      headers: {
-        "User-Agent": "SpeakToMeApp/1.0",
-      },
-      next: { revalidate: 86400 }, // cache a day
-    });
-
-    if (!res.ok) {
-      // fallback to another free source
-      const fallbackUrl = `https://dailybible.ca/api/${encodeURIComponent(ref)}?translation=kjv`;
-      const fallbackRes = await fetch(fallbackUrl);
-      if (!fallbackRes.ok) {
-        return NextResponse.json(
-          { error: "Could not find that passage. Try a simple reference like \"John 3:16\" or \"Psalm 23\"." },
-          { status: 404 }
-        );
-      }
-      const data = await fallbackRes.json();
-      return NextResponse.json({
-        reference: data.reference || ref,
-        text: data.text || (data.verses ? data.verses.map((v: any) => v.text).join(" ") : ""),
-        translation: "KJV",
-      });
+    const res = await fetchJson(`https://bible-api.com/${encoded}`);
+    if (res.ok) {
+      const data = await res.json();
+      const out = normalizeBibleApi(data, ref);
+      if (out.text) return NextResponse.json(out);
     }
-
-    const data = await res.json();
-
-    // Normalize response
-    const text =
-      data.verses && Array.isArray(data.verses)
-        ? data.verses.map((v: any) => v.text).join(" ")
-        : data.text || "";
-
-    return NextResponse.json({
-      reference: data.reference || ref,
-      text: text.trim(),
-      translation: data.translation?.abbreviation || data.translation_id || "WEB",
-      attribution: data.attribution || "Public Domain",
-    });
-  } catch (error) {
-    console.error("Bible fetch error:", error);
-    return NextResponse.json(
-      { error: "Unable to load Scripture right now. Please try again." },
-      { status: 500 }
-    );
+  } catch {
+    /* fall through */
   }
+
+  // 2) bible-api.com (KJV)
+  try {
+    const res = await fetchJson(`https://bible-api.com/${encoded}?translation=kjv`);
+    if (res.ok) {
+      const data = await res.json();
+      const out = normalizeBibleApi(data, ref);
+      if (out.text) return NextResponse.json({ ...out, translation: "KJV" });
+    }
+  } catch {
+    /* fall through */
+  }
+
+  // 3) dailybible.ca (KJV)
+  try {
+    const res = await fetchJson(`https://dailybible.ca/api/${encoded}?translation=kjv`);
+    if (res.ok) {
+      const data = await res.json();
+      const text =
+        data.text ||
+        (Array.isArray(data.verses)
+          ? data.verses.map((v: { text?: string }) => v.text || "").join(" ")
+          : "");
+      if (text && String(text).trim()) {
+        return NextResponse.json({
+          reference: data.reference || ref,
+          text: String(text).trim(),
+          translation: "KJV",
+          attribution: "Public Domain",
+        });
+      }
+    }
+  } catch {
+    /* fall through */
+  }
+
+  return NextResponse.json(
+    {
+      error:
+        'Could not find that passage. Try a simple reference like "John 3:16" or "Psalm 23".',
+    },
+    { status: 404 }
+  );
 }
