@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { Telemetry } from '../lib/TelemetryProvider';
 
 export const metadata: Metadata = {
   title: "Speak to Me",
@@ -19,7 +20,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="min-h-screen antialiased">{children}</body>
+      <body className="min-h-screen antialiased">
+        {children}
+        <Telemetry app="speaktome" />
+      </body>
     </html>
   );
 }
