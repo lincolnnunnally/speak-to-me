@@ -14,13 +14,27 @@ This app trains a different reflex: from “What did this mean then?” to “Wh
 
 ## Features (MVP)
 
+- **Today’s verse** from ChurchConnect Content Hub (BSB + Real Life Application)
 - Enter any simple Bible reference (John 3:16, Psalm 23, Romans 8:1, etc.)
 - Clean, distraction-free reading of the passage
 - Four quiet, relational invitation questions (not study questions)
-- Private journal response stored only on your device (localStorage)
-- Simple history of past responses
+- Private journal responses (your account / device — never bulk-shared as free text)
+- Optional **anonymized need themes** sent to ChurchConnect so area pastors can preach relevantly (topics only, not your journal)
 
-No accounts. No streaks. No gamification. Just the text and the invitation.
+## ChurchConnect interconnect
+
+| Action | API |
+|--------|-----|
+| Load today’s VOTD + RLT | `GET {CHURCHCONNECT_API}/api/public/homescreen-verse` |
+| View / journal / need signals | `POST {CHURCHCONNECT_API}/api/public/verse-engagement` |
+
+Env (optional):
+
+```bash
+NEXT_PUBLIC_CHURCHCONNECT_API_URL=https://api.churchconnect.cloud
+```
+
+Pastors see aggregates in ChurchConnect → Sermon Prep Audience Pulse / area-needs — never individual journal text.
 
 ## Tech
 

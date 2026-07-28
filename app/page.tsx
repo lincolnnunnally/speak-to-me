@@ -3,6 +3,11 @@
 import { useState, useEffect, useCallback } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createSpeakClient, isSupabaseConfigured } from "@/lib/supabase";
+import {
+  fetchHomescreenVerse,
+  recordVerseEngagement,
+  type HomescreenVerse,
+} from "@/lib/churchconnect";
 
 type JournalEntry = {
   id: string;
@@ -57,6 +62,30 @@ export default function Home() {
   const [showJournal, setShowJournal] = useState(false);
   const [savedMessage, setSavedMessage] = useState(false);
   const [saving, setSaving] = useState(false);
+  // ChurchConnect Content Hub — Verse of the Day + Real Life Application
+  const [homescreen, setHomescreen] = useState<HomescreenVerse | null>(null);
+  const [homescreenLoading, setHomescreenLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setHomescreenLoading(true);
+      const v = await fetchHomescreenVerse();
+      if (!cancelled) {
+        setHomescreen(v);
+        setHomescreenLoading(false);
+        if (v?.reference) {
+          void recordVerseEngagement({
+            event: "view",
+            reference: v.reference,
+          });
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (!sb) {
@@ -158,10 +187,37 @@ export default function Home() {
         text: data.text,
         translation: data.translation,
       });
+      // Anonymized signal only — never send journal text to ChurchConnect
+      void recordVerseEngagement({
+        event: "view",
+        reference: data.reference,
+      });
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const openTodaysVerse = () => {
+    if (!homescreen?.reference) return;
+    setReference(homescreen.reference);
+    // Prefer ChurchConnect BSB + RLT when present; still allow full passage load
+    if (homescreen.bsb_text) {
+      setPassage({
+        reference: homescreen.reference,
+        text: homescreen.bsb_text,
+        translation: "BSB · ChurchConnect",
+      });
+      setJournalText("");
+      setSavedMessage(false);
+      setError("");
+      void recordVerseEngagement({
+        event: "view",
+        reference: homescreen.reference,
+      });
+    } else {
+      loadPassage(homescreen.reference);
     }
   };
 
@@ -206,6 +262,13 @@ export default function Home() {
     setJournalText("");
     setSavedMessage(true);
     setTimeout(() => setSavedMessage(false), 2500);
+
+    // Topic-only signal for area pastors (no journal body)
+    void recordVerseEngagement({
+      event: "journal_prompt",
+      reference: passage.reference,
+      topic: "reflection",
+    });
 
     // Best-effort: contribute to the shared UUG growth journey.
     fetch("/api/journey", {
@@ -316,6 +379,28 @@ export default function Home() {
           <p className="text-center text-xs text-soft/70 mt-6">
             Your account works across the whole Life Produces Life family.
           </p>
+          {/* Today from ChurchConnect — available even before sign-in */}
+          {!homescreenLoading && homescreen?.reference && (
+            <div className="mt-8 rounded-2xl border border-black/5 bg-card p-4 text-left shadow-sm">
+              <p className="text-xs uppercase tracking-wide text-accent mb-1">
+                Today · ChurchConnect
+              </p>
+              <p className="font-serif text-lg text-ink">{homescreen.reference}</p>
+              {homescreen.bsb_text && (
+                <p className="text-sm text-soft mt-2 line-clamp-3 leading-relaxed">
+                  {homescreen.bsb_text}
+                </p>
+              )}
+              {homescreen.real_life_application && (
+                <p className="text-xs text-ink/70 mt-2 italic line-clamp-2">
+                  Real life: {homescreen.real_life_application}
+                </p>
+              )}
+              <p className="text-[11px] text-soft/70 mt-3">
+                Sign in to journal. Pastors may see anonymized area themes only — never your words.
+              </p>
+            </div>
+          )}
         </div>
       </main>
     );
@@ -348,6 +433,30 @@ export default function Home() {
       </header>
 
       <div className="max-w-2xl mx-auto px-5 pb-20">
+        {!showJournal && !passage && !homescreenLoading && homescreen?.reference && (
+          <button
+            type="button"
+            onClick={openTodaysVerse}
+            className="w-full text-left mb-6 rounded-2xl border border-accent/20 bg-accent/5 p-5 hover:bg-accent/10 transition"
+          >
+            <p className="text-xs uppercase tracking-wide text-accent mb-1">
+              Today&apos;s verse · Real Life Application
+            </p>
+            <p className="font-serif text-xl text-ink">{homescreen.reference}</p>
+            {homescreen.bsb_text && (
+              <p className="text-sm text-soft mt-2 line-clamp-4 leading-relaxed">
+                {homescreen.bsb_text}
+              </p>
+            )}
+            {homescreen.real_life_application && (
+              <p className="text-sm text-ink/80 mt-3 italic line-clamp-3">
+                {homescreen.real_life_application}
+              </p>
+            )}
+            <p className="text-xs text-accent mt-3 font-medium">Tap to receive this passage →</p>
+          </button>
+        )}
+
         {showJournal ? (
           <div className="space-y-4 mt-4">
             <h2 className="text-lg font-medium mb-4">Your responses</h2>
