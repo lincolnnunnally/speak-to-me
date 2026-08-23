@@ -3,13 +3,13 @@
  * Do not re-implement verse generation; pull from the public homescreen feed.
  *
  * Env (optional):
- *   NEXT_PUBLIC_CHURCHCONNECT_API_URL=https://api.churchconnect.cloud
+ *   NEXT_PUBLIC_CHURCHCONNECT_API_URL=https://www.churchconnect.cloud
  */
 
 const API =
   (typeof process !== "undefined" &&
     process.env.NEXT_PUBLIC_CHURCHCONNECT_API_URL) ||
-  "https://api.churchconnect.cloud";
+  "https://www.churchconnect.cloud";
 
 const DEVICE_KEY = "stm_verse_device_id";
 
