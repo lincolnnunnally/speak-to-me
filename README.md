@@ -31,7 +31,7 @@ This app trains a different reflex: from “What did this mean then?” to “Wh
 Env (optional):
 
 ```bash
-NEXT_PUBLIC_CHURCHCONNECT_API_URL=https://api.churchconnect.cloud
+NEXT_PUBLIC_CHURCHCONNECT_API_URL=https://www.churchconnect.cloud
 ```
 
 Pastors see aggregates in ChurchConnect → Sermon Prep Audience Pulse / area-needs — never individual journal text.
