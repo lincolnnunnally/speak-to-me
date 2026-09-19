@@ -3,8 +3,9 @@ import "./globals.css";
 import { Telemetry } from '../lib/TelemetryProvider';
 
 export const metadata: Metadata = {
-  title: "Speak to Me",
-  description: "Hear Scripture as a living word from God — not a history textbook.",
+  title: "Hear Scripture as a living word — one day at a time",
+  description:
+    "A quiet place to hear Scripture as a living word from God — not a history textbook. Create an account to keep your journal.",
 };
 
 export const viewport: Viewport = {
