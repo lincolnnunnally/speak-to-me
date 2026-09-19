@@ -41,7 +41,7 @@ export default function Home() {
   // ---- auth ----
   const [user, setUser] = useState<User | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
-  const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
+  const [authMode, setAuthMode] = useState<"signin" | "signup">("signup");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -316,10 +316,12 @@ export default function Home() {
       <main className="min-h-screen bg-cream text-ink flex items-center justify-center px-5">
         <div className="w-full max-w-sm">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-serif tracking-tight">Speak to Me</h1>
+            <h1 className="text-3xl font-serif tracking-tight">
+              Hear Scripture as a living word
+            </h1>
             <p className="text-soft mt-2 leading-relaxed">
-              A quiet place to hear Scripture as a living word from God — not a
-              textbook.
+              Speak to Me is a quiet place for one day at a time — not a
+              textbook. Create an account to keep what you hear.
             </p>
           </div>
           <form
