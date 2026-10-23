@@ -6,6 +6,11 @@ const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://speak-to-me.united
 
 const ROUTES: Array<{ path: string; priority: number }> = [
   { path: '/', priority: 1 },
+  // Public explainer pages. Journals are private, live behind sign-in on "/", and have no URL.
+  { path: '/daily-verse', priority: 0.8 },
+  { path: '/read', priority: 0.8 },
+  { path: '/quiet-questions', priority: 0.8 },
+  { path: '/private-journal', priority: 0.8 },
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
