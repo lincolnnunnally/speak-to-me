@@ -55,7 +55,7 @@ export const FEATURES: Record<FeatureKey, Feature> = {
 export const FEATURE_ORDER: FeatureKey[] = ["daily-verse", "read", "quiet-questions", "private-journal"];
 
 export const HOME = {
-  title: "Speak to Me — hear Scripture as a living word, daily",
+  title: "Speak to Me — a daily Bible verse, heard as a living word",
   description:
     "A quiet Bible reading app: today's verse, any passage you choose, four gentle questions and a private journal. Scripture as a living word, not a textbook.",
 };
