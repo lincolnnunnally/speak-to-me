@@ -47,7 +47,11 @@ export async function fetchHomescreenVerse(): Promise<HomescreenVerse | null> {
   try {
     const res = await fetch(
       `${churchConnectApiBase()}/api/public/homescreen-verse?surface=speak_to_me`,
-      { next: { revalidate: 300 } as RequestInit["next"] }
+      {
+        next: { revalidate: 300 } as RequestInit["next"],
+        // Also fetched while rendering the home page on the server: never let a slow feed hang it.
+        signal: AbortSignal.timeout(5000),
+      }
     );
     if (!res.ok) return null;
     return (await res.json()) as HomescreenVerse;

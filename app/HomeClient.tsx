@@ -8,6 +8,7 @@ import {
   recordVerseEngagement,
   type HomescreenVerse,
 } from "@/lib/churchconnect";
+import { INVITATION_QUESTIONS } from "@/lib/questions";
 
 type JournalEntry = {
   id: string;
@@ -17,12 +18,6 @@ type JournalEntry = {
   created_at: string;
 };
 
-const INVITATION_QUESTIONS = [
-  "Where do I see myself in this story or statement today?",
-  "What is God saying to me about how He sees me right now?",
-  "Is there something He is inviting me to receive, release, or do?",
-  "What would it look like to trust this today?",
-];
 
 function formatDate(iso: string) {
   const d = new Date(iso);
@@ -305,7 +300,6 @@ export default function HomeClient() {
   if (!authChecked) {
     return (
       <main className="min-h-screen bg-cream text-ink flex items-center justify-center">
-        <h1 className="sr-only">Speak to Me — hear Scripture as a living word</h1>
         <p className="text-soft">…</p>
       </main>
     );
@@ -317,9 +311,9 @@ export default function HomeClient() {
       <main className="min-h-screen bg-cream text-ink flex items-center justify-center px-5">
         <div className="w-full max-w-sm">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-serif tracking-tight">
+            <h2 className="text-3xl font-serif tracking-tight">
               Hear Scripture as a living word
-            </h1>
+            </h2>
             <p className="text-soft mt-2 leading-relaxed">
               Speak to Me is a quiet place for one day at a time — not a
               textbook. Create an account to keep what you hear.
@@ -415,7 +409,7 @@ export default function HomeClient() {
       <header className="px-5 pt-8 pb-4 max-w-2xl mx-auto">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-serif tracking-tight">Speak to Me</h1>
+            <p className="text-2xl font-serif tracking-tight">Speak to Me</p>
             <p className="text-soft text-sm mt-1">A living word, not a textbook</p>
           </div>
           <div className="flex items-center gap-4">
